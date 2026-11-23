@@ -41,6 +41,8 @@
     }
   };
 
+  let prefersReducedMotion = false;
+
   // =========================================================================
   // DOM Elements
   // =========================================================================
@@ -175,6 +177,20 @@
 
     // Render table
     renderVocabularyTable();
+
+    // GSAP Stat & Table Reveal
+    if (typeof gsap !== 'undefined' && !prefersReducedMotion) {
+      gsap.fromTo(
+        ['#stat-vocab-size', '#stat-total-tokens'],
+        { scale: 0.82, autoAlpha: 0 },
+        { scale: 1, autoAlpha: 1, duration: 0.45, ease: 'back.out(1.7)' }
+      );
+      gsap.fromTo(
+        '#vocab-table-body tr',
+        { y: 8, autoAlpha: 0 },
+        { y: 0, autoAlpha: 1, duration: 0.3, stagger: 0.015, ease: 'power1.out' }
+      );
+    }
 
     // Invalidate stale tokenization results from Section 2
     invalidateTokenizationResults();
@@ -312,6 +328,20 @@
     elements.tokenIdStream.textContent = `[ ${idArray.join(', ')} ]`;
 
     elements.tokenizeResultsArea.classList.remove('hidden');
+
+    // GSAP Staggered Entrance for Token Chips and Stream
+    if (typeof gsap !== 'undefined' && !prefersReducedMotion) {
+      gsap.fromTo(
+        '.token-chip',
+        { scale: 0.75, y: -10, autoAlpha: 0 },
+        { scale: 1, y: 0, autoAlpha: 1, duration: 0.35, stagger: 0.035, ease: 'back.out(1.6)' }
+      );
+      gsap.fromTo(
+        '#token-id-stream',
+        { autoAlpha: 0, x: -14 },
+        { autoAlpha: 1, x: 0, duration: 0.4, ease: 'power2.out' }
+      );
+    }
   }
 
   function invalidateTokenizationResults() {
@@ -556,23 +586,45 @@
     }
 
     const coords3D = classicalMDS(distMatrix, 3);
+    const hasExisting = state.points3D && state.points3D.length === rawLines.length;
 
-    state.points3D = rawLines.map((sentence, idx) => {
-      const [x, y, z] = coords3D[idx];
-      return {
-        sentence,
-        index: idx + 1,
-        x,
-        y,
-        z,
-        category: categorizeSentence(sentence, idx),
-        screenX: 0,
-        screenY: 0,
-        depth: 0
-      };
-    });
+    if (hasExisting && typeof gsap !== 'undefined' && !prefersReducedMotion) {
+      // Kill any in-flight tweens on point coordinates
+      state.points3D.forEach(pt => gsap.killTweensOf(pt));
 
-    renderCanvas3D();
+      rawLines.forEach((sentence, idx) => {
+        const pt = state.points3D[idx];
+        const [targetX, targetY, targetZ] = coords3D[idx];
+        pt.sentence = sentence;
+        pt.category = categorizeSentence(sentence, idx);
+
+        gsap.to(pt, {
+          x: targetX,
+          y: targetY,
+          z: targetZ,
+          duration: 0.85,
+          delay: idx * 0.02,
+          ease: 'power2.out',
+          onUpdate: renderCanvas3D
+        });
+      });
+    } else {
+      state.points3D = rawLines.map((sentence, idx) => {
+        const [x, y, z] = coords3D[idx];
+        return {
+          sentence,
+          index: idx + 1,
+          x,
+          y,
+          z,
+          category: categorizeSentence(sentence, idx),
+          screenX: 0,
+          screenY: 0,
+          depth: 0
+        };
+      });
+      renderCanvas3D();
+    }
     updateFlowStep(6, true);
   }
 
@@ -818,16 +870,37 @@
     elements.btnZoomOut.addEventListener('click', () => adjustZoom(-0.15));
 
     elements.btnResetView.addEventListener('click', () => {
-      state.camera.rotX = -0.32;
-      state.camera.rotY = 0.65;
-      state.camera.zoom = 1.0;
-      renderCanvas3D();
+      if (typeof gsap !== 'undefined' && !prefersReducedMotion) {
+        gsap.to(state.camera, {
+          rotX: -0.32,
+          rotY: 0.65,
+          zoom: 1.0,
+          duration: 0.7,
+          ease: 'power2.out',
+          onUpdate: renderCanvas3D
+        });
+      } else {
+        state.camera.rotX = -0.32;
+        state.camera.rotY = 0.65;
+        state.camera.zoom = 1.0;
+        renderCanvas3D();
+      }
     });
   }
 
   function adjustZoom(delta) {
-    state.camera.zoom = Math.max(0.5, Math.min(2.5, state.camera.zoom + delta));
-    renderCanvas3D();
+    const targetZoom = Math.max(0.5, Math.min(2.5, state.camera.zoom + delta));
+    if (typeof gsap !== 'undefined' && !prefersReducedMotion) {
+      gsap.to(state.camera, {
+        zoom: targetZoom,
+        duration: 0.35,
+        ease: 'power1.out',
+        onUpdate: renderCanvas3D
+      });
+    } else {
+      state.camera.zoom = targetZoom;
+      renderCanvas3D();
+    }
   }
 
   function handleCanvasHover(e) {
@@ -883,12 +956,22 @@
   function updateFlowStep(activeStepIndex, isCompleted) {
     elements.flowSteps.forEach((stepEl, idx) => {
       const stepNum = idx + 1;
+      const numBadge = stepEl.querySelector('.step-num');
       if (stepNum < activeStepIndex) {
         stepEl.classList.remove('active');
         stepEl.classList.add('completed');
       } else if (stepNum === activeStepIndex) {
+        const wasActive = stepEl.classList.contains('active');
         stepEl.classList.add('active');
         if (isCompleted) stepEl.classList.add('completed');
+
+        if (!wasActive && typeof gsap !== 'undefined' && !prefersReducedMotion && numBadge) {
+          gsap.fromTo(
+            numBadge,
+            { scale: 0.8 },
+            { scale: 1.25, duration: 0.25, yoyo: true, repeat: 1, ease: 'power2.out' }
+          );
+        }
       } else {
         stepEl.classList.remove('active', 'completed');
       }
@@ -909,6 +992,20 @@
   }
 
   function init() {
+    if (typeof gsap !== 'undefined') {
+      const mm = gsap.matchMedia();
+      mm.add(
+        {
+          reduceMotion: '(prefers-reduced-motion: reduce)',
+          noPreference: '(prefers-reduced-motion: no-preference)'
+        },
+        (context) => {
+          prefersReducedMotion = !!context.conditions.reduceMotion;
+        }
+      );
+      gsap.defaults({ ease: 'power2.out', duration: 0.4 });
+    }
+
     elements.btnBuildVocab.addEventListener('click', buildVocabulary);
     elements.vocabSearch.addEventListener('input', renderVocabularyTable);
 
