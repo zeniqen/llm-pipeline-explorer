@@ -95,6 +95,14 @@
   // Canvas 2D Rendering Context
   const ctx = elements.canvas.getContext('2d');
 
+  // Palette constants matching CSS tokens
+  const THEME_COLORS = {
+    feline: '#047857',   // Emerald
+    lexical: '#b45309',  // Amber
+    sky: '#1d4ed8',      // Blue
+    tech: '#0f766e'      // Teal (Cohesive palette, no AI violet slop)
+  };
+
   // =========================================================================
   // SECTION 1: VOCABULARY BUILDER
   // =========================================================================
@@ -105,10 +113,8 @@
    */
   function extractRawTokens(text) {
     if (!text || typeof text !== 'string') return [];
-    // Match sequences of letters/numbers OR individual non-whitespace punctuation marks
     const regex = /([a-zA-Z0-9]+|[^\s\w])/g;
-    const matches = text.match(regex);
-    return matches || [];
+    return text.match(regex) || [];
   }
 
   /**
@@ -143,7 +149,6 @@
       const isPunctuation = /^[^\s\w]$/.test(raw);
 
       if (state.vocabulary.has(normalized)) {
-        // Increment frequency count
         state.vocabulary.get(normalized).count++;
       } else {
         state.vocabulary.set(normalized, {
@@ -186,7 +191,6 @@
     const rows = [];
     let matchCount = 0;
 
-    // Convert map to array and sort by Token ID ascending
     const vocabList = Array.from(state.vocabulary.values()).sort((a, b) => a.id - b.id);
 
     for (const item of vocabList) {
@@ -221,12 +225,8 @@
 
   /**
    * Tokenizes an input sentence using the built vocabulary.
-   * Fallback rule for unknown words:
-   * Splits into characters, first char un-prefixed, following chars prefixed with '##',
-   * all assigned Token ID 0 ([UNK]).
    */
   function tokenizeSentence() {
-    // If vocabulary is not yet built, instruct user clearly
     if (!state.isVocabBuilt) {
       elements.tokenizeWarning.classList.remove('hidden');
       elements.tokenizeResultsArea.classList.add('hidden');
@@ -249,7 +249,6 @@
       const isPunctuation = /^[^\s\w]$/.test(raw);
 
       if (state.vocabulary.has(normalized)) {
-        // Known token in vocabulary
         const vocabItem = state.vocabulary.get(normalized);
         resultTokens.push({
           text: raw,
@@ -258,9 +257,7 @@
           isSubword: false
         });
       } else {
-        // Unknown token: apply classroom fallback rule
         if (isPunctuation) {
-          // Unknown punctuation receives ID 0 directly
           resultTokens.push({
             text: raw,
             id: 0,
@@ -268,9 +265,6 @@
             isSubword: false
           });
         } else {
-          // Unknown word: character-by-character split
-          // Character 0: raw character without prefix
-          // Characters 1..N: prefixed with '##'
           const chars = raw.split('');
           for (let i = 0; i < chars.length; i++) {
             const charToken = i === 0 ? chars[i] : `##${chars[i]}`;
@@ -302,7 +296,6 @@
     elements.knownCountValue.textContent = knownCount.toString();
     elements.unknownCountValue.textContent = unknownCount.toString();
 
-    // Render Token Chips
     const chipsHtml = state.tokens.map(token => `
       <div class="token-chip ${token.isUnknown ? 'chip-unknown' : ''}" title="Token: ${escapeHtml(token.text)} (ID: ${token.id})">
         <span class="chip-text">${escapeHtml(token.text)}</span>
@@ -315,16 +308,12 @@
 
     elements.tokensChipList.innerHTML = chipsHtml;
 
-    // Render Raw Numeric ID Sequence
     const idArray = state.tokens.map(t => t.id);
     elements.tokenIdStream.textContent = `[ ${idArray.join(', ')} ]`;
 
     elements.tokenizeResultsArea.classList.remove('hidden');
   }
 
-  /**
-   * Invalidate previous tokenization when vocabulary is modified or rebuilt.
-   */
   function invalidateTokenizationResults() {
     state.tokens = [];
     state.lastTokenizedSentence = '';
@@ -336,25 +325,6 @@
   // SECTION 3: SENTENCE EMBEDDINGS & 3D VISUALIZATION
   // =========================================================================
 
-  /**
-   * Deterministic Feature Extraction & Metric Multidimensional Scaling (MDS)
-   *
-   * Transparent Educational Heuristics:
-   * 1. Spelling-based mode:
-   *    Calculates pairwise distances from character n-gram Jaccard similarity and
-   *    normalized Levenshtein string edit distances. Sentences with similar spelling
-   *    (like "The cat sat on the ..." and "The bat sat on the ...") have near-zero distance.
-   *
-   * 2. Meaning-based mode:
-   *    Projects sentences into semantic concept domains:
-   *    - Topic 1: Feline / Domestic / Rest ("cat", "kitten", "feline", "sat", "mat", "rug", "relax", "rests")
-   *    - Topic 2: Celestial / Sunlight / Atmosphere ("sun", "solar", "shining", "brightly", "sky", "atmosphere")
-   *    - Topic 3: Computational / Algorithms ("quantum", "computers", "processors", "calculate", "algorithms")
-   *    - Topic 4: Chiroptera / Flying ("bat", "wings", "flying")
-   *    Pairwise distances are computed via normalized cosine distance.
-   */
-
-  // Lexicon dictionary for meaning-based concept vector mapping
   const CONCEPT_KEYWORDS = {
     feline: ['cat', 'kitten', 'feline', 'mat', 'rug', 'carpet', 'sat', 'rests', 'sitting', 'relaxes', 'rest', 'nap'],
     celestial: ['sun', 'solar', 'shining', 'rays', 'illuminate', 'brightly', 'bright', 'clear', 'sky', 'atmosphere', 'cloudless', 'daylight'],
@@ -362,9 +332,6 @@
     bat: ['bat', 'wings', 'flying', 'nocturnal', 'cave']
   };
 
-  /**
-   * Calculates Levenshtein edit distance between two strings.
-   */
   function levenshteinDistance(s1, s2) {
     const a = s1.toLowerCase();
     const b = s2.toLowerCase();
@@ -381,18 +348,15 @@
       for (let j = 1; j <= n; j++) {
         const cost = a[i - 1] === b[j - 1] ? 0 : 1;
         matrix[i][j] = Math.min(
-          matrix[i - 1][j] + 1,       // deletion
-          matrix[i][j - 1] + 1,       // insertion
-          matrix[i - 1][j - 1] + cost // substitution
+          matrix[i - 1][j] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j - 1] + cost
         );
       }
     }
     return matrix[m][n];
   }
 
-  /**
-   * Extracts character n-grams (bigrams) from string.
-   */
   function getCharacterNgrams(str, n = 2) {
     const s = str.toLowerCase().replace(/\s+/g, ' ');
     const ngrams = new Set();
@@ -402,9 +366,6 @@
     return ngrams;
   }
 
-  /**
-   * Computes Jaccard distance (1 - similarity) between two sets.
-   */
   function jaccardDistance(setA, setB) {
     if (setA.size === 0 && setB.size === 0) return 0;
     let intersection = 0;
@@ -415,12 +376,9 @@
     return union === 0 ? 0 : 1 - (intersection / union);
   }
 
-  /**
-   * Constructs semantic vector for a sentence based on concept keywords.
-   */
   function getSemanticVector(sentence) {
     const words = extractRawTokens(sentence).map(w => w.toLowerCase());
-    const vec = [0, 0, 0, 0]; // [feline, celestial, tech, bat]
+    const vec = [0, 0, 0, 0];
 
     for (const word of words) {
       if (CONCEPT_KEYWORDS.feline.includes(word)) vec[0] += 1.5;
@@ -429,19 +387,14 @@
       if (CONCEPT_KEYWORDS.bat.includes(word)) vec[3] += 2.0;
     }
 
-    // Add baseline subtle length/word variation to prevent degenerate identical zero vectors
     vec[0] += (sentence.length % 5) * 0.05;
     vec[1] += (words.length % 4) * 0.05;
     vec[2] += (sentence.charCodeAt(0) % 3) * 0.05;
 
-    // Normalize to unit vector
     const norm = Math.hypot(...vec) || 1;
     return vec.map(v => v / norm);
   }
 
-  /**
-   * Computes Cosine Distance (1 - Cosine Similarity) between two vectors.
-   */
   function cosineDistance(v1, v2) {
     let dot = 0;
     for (let i = 0; i < v1.length; i++) {
@@ -450,13 +403,8 @@
     return Math.max(0, 1 - dot);
   }
 
-  /**
-   * Classical Multidimensional Scaling (MDS) in 3D.
-   * Takes a symmetric N x N distance matrix and projects items to 3D Cartesian coordinates.
-   */
   function classicalMDS(distMatrix, dimensions = 3) {
     const n = distMatrix.length;
-    // Step 1: Compute squared distance matrix D^2
     const D2 = Array.from({ length: n }, () => new Float64Array(n));
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
@@ -464,8 +412,6 @@
       }
     }
 
-    // Step 2: Double centering B = -0.5 * H * D2 * H
-    // Mean across rows, cols, and overall
     const rowMeans = new Float64Array(n);
     const colMeans = new Float64Array(n);
     let totalMean = 0;
@@ -488,24 +434,20 @@
       }
     }
 
-    // Step 3: Extract top eigenvectors of B using power iteration with Gram-Schmidt deflation
     const coords = Array.from({ length: n }, () => new Float64Array(dimensions));
     const eigenvectors = [];
 
     for (let d = 0; d < dimensions; d++) {
       let vec = new Float64Array(n);
-      for (let i = 0; i < n; i++) vec[i] = Math.sin(i * 1.5 + d + 1.0); // Deterministic non-zero seed
+      for (let i = 0; i < n; i++) vec[i] = Math.sin(i * 1.5 + d + 1.0);
 
-      // Power iteration (25 iterations is plenty for small n=10)
       for (let iter = 0; iter < 30; iter++) {
-        // Orthogonalize against previously found eigenvectors
         for (const prevVec of eigenvectors) {
           let dot = 0;
           for (let i = 0; i < n; i++) dot += vec[i] * prevVec[i];
           for (let i = 0; i < n; i++) vec[i] -= dot * prevVec[i];
         }
 
-        // Multiply by B: next = B * vec
         const next = new Float64Array(n);
         for (let i = 0; i < n; i++) {
           let sum = 0;
@@ -519,7 +461,6 @@
         }
       }
 
-      // Compute Rayleigh quotient / eigenvalue
       let lambda = 0;
       for (let i = 0; i < n; i++) {
         let bRowDot = 0;
@@ -534,7 +475,6 @@
       }
     }
 
-    // Normalize coordinates to fit nicely inside [-120, +120] range for canvas
     let maxDist = 0;
     for (let i = 0; i < n; i++) {
       const d = Math.hypot(coords[i][0], coords[i][1], coords[i][2]);
@@ -544,29 +484,23 @@
     return coords.map(c => [c[0] * targetScale, c[1] * targetScale, c[2] * targetScale]);
   }
 
-  /**
-   * Categorizes sentences for UI color coding.
-   */
   function categorizeSentence(sentence, index) {
     const s = sentence.toLowerCase();
     if (s.includes('cat sat on the ...') || s.includes('bat sat on the ...')) {
-      return 'lexical'; // Pair B
+      return 'lexical';
     }
     if (s.includes('cat') || s.includes('kitten') || s.includes('feline') || s.includes('mat') || s.includes('rug') || s.includes('carpet')) {
-      return 'feline'; // Pair A
+      return 'feline';
     }
     if (s.includes('sun') || s.includes('solar') || s.includes('sky') || s.includes('rays') || s.includes('atmosphere')) {
-      return 'sky'; // Pair C
+      return 'sky';
     }
     if (s.includes('quantum') || s.includes('computer') || s.includes('processor') || s.includes('algorithm')) {
-      return 'tech'; // Pair D
+      return 'tech';
     }
     return index % 2 === 0 ? 'feline' : 'lexical';
   }
 
-  /**
-   * Computes 3D coordinates for all input sentences under current mode.
-   */
   function calculateEmbeddings() {
     const rawLines = elements.embeddingsSentences.value
       .split('\n')
@@ -583,8 +517,6 @@
     const distMatrix = Array.from({ length: n }, () => new Float64Array(n));
 
     if (state.mode === 'spelling') {
-      // SPELLING-BASED (STATIC) DISTANCE
-      // Combines normalized Levenshtein distance and character bigram Jaccard distance
       const ngramsList = rawLines.map(s => getCharacterNgrams(s, 2));
 
       for (let i = 0; i < n; i++) {
@@ -596,8 +528,6 @@
           const maxLen = Math.max(rawLines[i].length, rawLines[j].length) || 1;
           const levNorm = levenshteinDistance(rawLines[i], rawLines[j]) / maxLen;
           const jacDist = jaccardDistance(ngramsList[i], ngramsList[j]);
-
-          // Weighted average: high emphasis on literal letter matching
           distMatrix[i][j] = 0.5 * levNorm + 0.5 * jacDist;
         }
       }
@@ -607,8 +537,6 @@
         <strong>Spelling-based (static):</strong> Coordinates are computed from character n-gram Jaccard overlap and Levenshtein edit distance. Notice how <em>“The cat sat on the ...”</em> and <em>“The bat sat on the ...”</em> are positioned right next to each other because their literal spelling is 95% identical, even though a cat and a bat are completely different creatures.
       `;
     } else {
-      // MEANING-BASED (CONTEXTUAL) DISTANCE
-      // Uses semantic concept keyword vectors with cosine distance
       const semanticVectors = rawLines.map(s => getSemanticVector(s));
 
       for (let i = 0; i < n; i++) {
@@ -627,7 +555,6 @@
       `;
     }
 
-    // Project using 3D Metric MDS
     const coords3D = classicalMDS(distMatrix, 3);
 
     state.points3D = rawLines.map((sentence, idx) => {
@@ -653,9 +580,6 @@
   // 3D CANVAS RENDERING ENGINE
   // =========================================================================
 
-  /**
-   * Renders the 3D coordinate space, axes, floor grid, points, and labels on HTML5 Canvas.
-   */
   function renderCanvas3D() {
     const width = elements.canvas.width;
     const height = elements.canvas.height;
@@ -665,25 +589,18 @@
     const centerY = height / 2;
     const { rotX, rotY, zoom, baseDist } = state.camera;
 
-    // Trigonometry constants for 3D rotation
     const cosY = Math.cos(rotY);
     const sinY = Math.sin(rotY);
     const cosX = Math.cos(rotX);
     const sinX = Math.sin(rotX);
 
-    /**
-     * 3D to 2D projection function with perspective
-     */
     function project3D(x, y, z) {
-      // 1. Rotate around Y axis (Yaw)
       const x1 = x * cosY + z * sinY;
       const z1 = -x * sinY + z * cosY;
 
-      // 2. Rotate around X axis (Pitch)
       const y2 = y * cosX - z1 * sinX;
       const z2 = y * sinX + z1 * cosX;
 
-      // 3. Perspective projection
       const cameraZ = baseDist + z2;
       const factor = (baseDist / Math.max(cameraZ, 40)) * zoom;
 
@@ -704,13 +621,11 @@
 
     ctx.beginPath();
     for (let g = -gridSize; g <= gridSize; g += gridStep) {
-      // Lines parallel to X
       const p1 = project3D(-gridSize, floorY, g);
       const p2 = project3D(gridSize, floorY, g);
       ctx.moveTo(p1.x, p1.y);
       ctx.lineTo(p2.x, p2.y);
 
-      // Lines parallel to Z
       const p3 = project3D(g, floorY, -gridSize);
       const p4 = project3D(g, floorY, gridSize);
       ctx.moveTo(p3.x, p3.y);
@@ -723,15 +638,12 @@
     const axisLen = 130;
 
     const axisX = project3D(axisLen, 0, 0);
-    const axisY = project3D(0, -axisLen, 0); // Y points upward
+    const axisY = project3D(0, -axisLen, 0);
     const axisZ = project3D(0, 0, axisLen);
 
-    // Draw X Axis (Red / Slate)
-    drawAxisLine(origin, axisX, '#ef4444', 'X (Dim 1)');
-    // Draw Y Axis (Green / Emerald)
-    drawAxisLine(origin, axisY, '#10b981', 'Y (Dim 2)');
-    // Draw Z Axis (Blue / Sky)
-    drawAxisLine(origin, axisZ, '#3b82f6', 'Z (Dim 3)');
+    drawAxisLine(origin, axisX, '#dc2626', 'X (Dim 1)');
+    drawAxisLine(origin, axisY, '#059669', 'Y (Dim 2)');
+    drawAxisLine(origin, axisZ, '#1d4ed8', 'Z (Dim 3)');
 
     // 3. Project all 3D sentence points
     for (const pt of state.points3D) {
@@ -742,7 +654,6 @@
       pt.scale = proj.scale;
     }
 
-    // Depth-sort points (painter's algorithm: draw farthest first, closest last)
     const sortedPoints = [...state.points3D].sort((a, b) => b.depth - a.depth);
 
     // 4. Draw Drop-lines to floor grid for depth perception
@@ -757,7 +668,6 @@
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Subtle shadow oval on floor
       ctx.beginPath();
       ctx.fillStyle = 'rgba(100, 116, 139, 0.15)';
       ctx.ellipse(floorProj.x, floorProj.y, 4 * pt.scale, 2 * pt.scale, 0, 0, Math.PI * 2);
@@ -771,20 +681,15 @@
       const radius = isHovered ? baseRadius * 1.4 : baseRadius;
 
       // Color scheme based on category
-      let colorFill = '#059669'; // feline (emerald)
-      if (pt.category === 'lexical') colorFill = '#d97706'; // amber
-      else if (pt.category === 'sky') colorFill = '#0284c7'; // blue
-      else if (pt.category === 'tech') colorFill = '#9333ea'; // purple
+      const colorFill = THEME_COLORS[pt.category] || THEME_COLORS.feline;
 
-      // Draw point halo on hover
       if (isHovered) {
         ctx.beginPath();
         ctx.arc(pt.screenX, pt.screenY, radius + 4, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(37, 99, 235, 0.25)';
+        ctx.fillStyle = 'rgba(29, 78, 216, 0.22)';
         ctx.fill();
       }
 
-      // Draw point circle
       ctx.beginPath();
       ctx.arc(pt.screenX, pt.screenY, Math.max(3, radius), 0, Math.PI * 2);
       ctx.fillStyle = colorFill;
@@ -793,14 +698,10 @@
       ctx.strokeStyle = '#ffffff';
       ctx.stroke();
 
-      // Draw Label Badge
       drawPointLabel(pt, isHovered);
     }
   }
 
-  /**
-   * Helper to draw an axis line with arrow and label.
-   */
   function drawAxisLine(start, end, color, label) {
     ctx.beginPath();
     ctx.strokeStyle = color;
@@ -809,40 +710,31 @@
     ctx.lineTo(end.x, end.y);
     ctx.stroke();
 
-    // Axis label
-    ctx.font = '10px var(--font-sans, sans-serif)';
+    ctx.font = '600 10px var(--font-sans, sans-serif)';
     ctx.fillStyle = color;
     ctx.fillText(label, end.x + 4, end.y + 3);
   }
 
-  /**
-   * Draws a clean background pill and text for sentence point labels.
-   */
   function drawPointLabel(pt, isHovered) {
     const labelText = `#${pt.index}: ${truncate(pt.sentence, 26)}`;
-    ctx.font = isHovered ? 'bold 11px var(--font-sans, sans-serif)' : '10px var(--font-sans, sans-serif)';
+    ctx.font = isHovered ? 'bold 11px var(--font-sans, sans-serif)' : '500 10px var(--font-sans, sans-serif)';
     const textWidth = ctx.measureText(labelText).width;
-    const padding = 4;
-    const pillHeight = 16;
+    const padding = 5;
+    const pillHeight = 18;
     const pillWidth = textWidth + padding * 2;
 
     const labelX = pt.screenX + 8;
     const labelY = pt.screenY - 10;
 
-    // Draw background pill
-    ctx.fillStyle = isHovered ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.88)';
-    ctx.strokeStyle = isHovered ? '#2563eb' : '#cbd5e1';
+    ctx.fillStyle = isHovered ? 'rgba(15, 23, 42, 0.96)' : 'rgba(255, 255, 255, 0.92)';
+    ctx.strokeStyle = isHovered ? '#1d4ed8' : '#cbd5e1';
     ctx.lineWidth = 1;
-    roundRect(ctx, labelX, labelY - 12, pillWidth, pillHeight, 3, true, true);
+    roundRect(ctx, labelX, labelY - 13, pillWidth, pillHeight, 4, true, true);
 
-    // Text color
-    ctx.fillStyle = isHovered ? '#ffffff' : '#1e293b';
+    ctx.fillStyle = isHovered ? '#ffffff' : '#0f172a';
     ctx.fillText(labelText, labelX + padding, labelY);
   }
 
-  /**
-   * Utility to draw rounded rectangle on canvas.
-   */
   function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
     ctx.beginPath();
     ctx.moveTo(x + radius, y);
@@ -860,14 +752,12 @@
   }
 
   // =========================================================================
-  // INTERACTIVE CANVAS CONTROLS (DRAG, ROTATE, ZOOM, TOOLTIPS)
+  // INTERACTIVE CONTROLS
   // =========================================================================
 
   function setupCanvasInteractions() {
     const canvas = elements.canvas;
-    const container = elements.canvasContainer;
 
-    // Mouse Drag Rotation
     canvas.addEventListener('mousedown', (e) => {
       state.camera.isDragging = true;
       state.camera.lastMouseX = e.clientX;
@@ -880,13 +770,11 @@
         const dy = e.clientY - state.camera.lastMouseY;
         state.camera.rotY += dx * 0.008;
         state.camera.rotX += dy * 0.008;
-        // Clamp pitch to avoid gimbal flip
         state.camera.rotX = Math.max(-1.4, Math.min(1.4, state.camera.rotX));
         state.camera.lastMouseX = e.clientX;
         state.camera.lastMouseY = e.clientY;
         renderCanvas3D();
       } else {
-        // Point hover detection
         handleCanvasHover(e);
       }
     });
@@ -895,7 +783,6 @@
       state.camera.isDragging = false;
     });
 
-    // Touch Drag Rotation (Mobile & Tablet)
     canvas.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
         state.camera.isDragging = true;
@@ -921,18 +808,15 @@
       state.camera.isDragging = false;
     });
 
-    // Mouse Scroll Wheel Zoom
     canvas.addEventListener('wheel', (e) => {
       e.preventDefault();
       const zoomDelta = e.deltaY * -0.0015;
       adjustZoom(zoomDelta);
     }, { passive: false });
 
-    // Zoom Buttons
     elements.btnZoomIn.addEventListener('click', () => adjustZoom(0.15));
     elements.btnZoomOut.addEventListener('click', () => adjustZoom(-0.15));
 
-    // Reset View Button
     elements.btnResetView.addEventListener('click', () => {
       state.camera.rotX = -0.32;
       state.camera.rotY = 0.65;
@@ -946,9 +830,6 @@
     renderCanvas3D();
   }
 
-  /**
-   * Hover detector for points on 3D canvas
-   */
   function handleCanvasHover(e) {
     const rect = elements.canvas.getBoundingClientRect();
     const scaleX = elements.canvas.width / rect.width;
@@ -958,7 +839,7 @@
     const mouseY = (e.clientY - rect.top) * scaleY;
 
     let closest = null;
-    let minDistance = 16; // hover radius
+    let minDistance = 16;
 
     for (const pt of state.points3D) {
       const dist = Math.hypot(pt.screenX - mouseX, pt.screenY - mouseY);
@@ -999,10 +880,6 @@
     elements.pointTooltip.classList.add('hidden');
   }
 
-  // =========================================================================
-  // PIPELINE FLOW TRACKER & HELPERS
-  // =========================================================================
-
   function updateFlowStep(activeStepIndex, isCompleted) {
     elements.flowSteps.forEach((stepEl, idx) => {
       const stepNum = idx + 1;
@@ -1031,18 +908,10 @@
     return str.length > maxLen ? str.substring(0, maxLen - 1) + '…' : str;
   }
 
-  // =========================================================================
-  // INITIALIZATION & EVENT LISTENERS
-  // =========================================================================
-
   function init() {
-    // Section 1: Build Vocabulary button
     elements.btnBuildVocab.addEventListener('click', buildVocabulary);
-
-    // Section 1: Vocab search filter input
     elements.vocabSearch.addEventListener('input', renderVocabularyTable);
 
-    // Invalidate vocab when corpus text changes
     elements.corpusInput.addEventListener('input', () => {
       state.isVocabBuilt = false;
       elements.vocabStatus.textContent = 'Corpus edited — click "Build Vocabulary" to refresh';
@@ -1050,17 +919,14 @@
       invalidateTokenizationResults();
     });
 
-    // Section 2: Tokenize button
     elements.btnTokenize.addEventListener('click', tokenizeSentence);
 
-    // Re-tokenize on enter key in sentence input
     elements.sentenceInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         tokenizeSentence();
       }
     });
 
-    // Section 3: Mode selection change
     elements.modeSpelling.addEventListener('change', () => {
       state.mode = 'spelling';
       calculateEmbeddings();
@@ -1071,24 +937,15 @@
       calculateEmbeddings();
     });
 
-    // Section 3: Plot Sentences button
     elements.btnPlot3D.addEventListener('click', calculateEmbeddings);
 
-    // Setup Canvas Mouse/Touch controls
     setupCanvasInteractions();
 
-    // Auto-initialize:
-    // 1. Build initial vocabulary from prefilled corpus
     buildVocabulary();
-
-    // 2. Tokenize prefilled test sentence
     tokenizeSentence();
-
-    // 3. Compute initial 3D embeddings & plot
     calculateEmbeddings();
   }
 
-  // Run on DOM load
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {

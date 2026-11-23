@@ -54,10 +54,7 @@
       <!-- SECTION 1: BUILD VOCABULARY -->
       <section class="pipeline-section" id="section-vocab" aria-labelledby="heading-vocab">
         <div class="section-header">
-          <div class="section-title-wrap">
-            <span class="section-badge">Section 1</span>
-            <h2 id="heading-vocab">Build Vocabulary</h2>
-          </div>
+          <h2 id="heading-vocab" class="section-heading">1. Build Vocabulary</h2>
           <p class="section-desc">Extract unique words and punctuation from training text, assigning each a deterministic numeric token ID. ID <code>0</code> is reserved for <code>[UNK]</code>.</p>
         </div>
 
@@ -80,20 +77,20 @@ A rabbit jumped over the red stone.</textarea>
         </div>
 
         <div id="vocab-results-area" class="results-area hidden" aria-live="polite">
-          <div class="stats-bar">
-            <div class="stat-card">
-              <span class="stat-label">Total Vocabulary Size</span>
-              <span id="stat-vocab-size" class="stat-value">0</span>
+          <dl class="stats-summary-grid">
+            <div class="stat-cell">
+              <dt class="stat-label">Total Vocabulary Size</dt>
+              <dd id="stat-vocab-size" class="stat-value">0</dd>
             </div>
-            <div class="stat-card">
-              <span class="stat-label">Corpus Tokens Found</span>
-              <span id="stat-total-tokens" class="stat-value">0</span>
+            <div class="stat-cell">
+              <dt class="stat-label">Corpus Tokens Found</dt>
+              <dd id="stat-total-tokens" class="stat-value">0</dd>
             </div>
-            <div class="stat-card">
-              <span class="stat-label">Reserved Unknown ID</span>
-              <span class="stat-value">0 ([UNK])</span>
+            <div class="stat-cell">
+              <dt class="stat-label">Reserved Unknown ID</dt>
+              <dd class="stat-value">0 ([UNK])</dd>
             </div>
-          </div>
+          </dl>
 
           <div class="table-controls">
             <input type="text" id="vocab-search" class="search-field" placeholder="Filter vocabulary tokens..." aria-label="Filter vocabulary table">
@@ -104,10 +101,10 @@ A rabbit jumped over the red stone.</textarea>
             <table class="data-table" id="vocab-table">
               <thead>
                 <tr>
-                  <th scope="col" style="width: 15%;">Token ID</th>
-                  <th scope="col" style="width: 45%;">Token String</th>
+                  <th scope="col" style="width: 18%;">Token ID</th>
+                  <th scope="col" style="width: 42%;">Token String</th>
                   <th scope="col" style="width: 20%;">Type</th>
-                  <th scope="col" style="width: 20%;">Corpus Frequency</th>
+                  <th scope="col" style="width: 20%;">Frequency</th>
                 </tr>
               </thead>
               <tbody id="vocab-table-body">
@@ -121,10 +118,7 @@ A rabbit jumped over the red stone.</textarea>
       <!-- SECTION 2: TOKENIZE A SENTENCE -->
       <section class="pipeline-section" id="section-tokenize" aria-labelledby="heading-tokenize">
         <div class="section-header">
-          <div class="section-title-wrap">
-            <span class="section-badge">Section 2</span>
-            <h2 id="heading-tokenize">Tokenize a Sentence</h2>
-          </div>
+          <h2 id="heading-tokenize" class="section-heading">2. Tokenize a Sentence</h2>
           <p class="section-desc">Split an incoming sentence into tokens and map them to their numeric IDs. Unknown words use a character fallback rule.</p>
         </div>
 
@@ -158,9 +152,9 @@ A rabbit jumped over the red stone.</textarea>
             </div>
           </div>
 
-          <div class="rule-explainer-card">
-            <h4>Educational Demo Fallback Rule:</h4>
-            <p>When a word is not in the vocabulary, this simplified demo splits it into characters. The first character is kept as-is, and every subsequent character is prefixed with <code>##</code>. All resulting characters receive ID <code>0</code> (<code>[UNK]</code>). Real LLMs use trained subword algorithms like BPE or WordPiece.</p>
+          <div class="callout-box">
+            <h3 class="callout-title">Educational Demo Fallback Rule</h3>
+            <p class="callout-text">When a word is not in the vocabulary, this simplified demo splits it into characters. The first character is kept as-is, and every subsequent character is prefixed with <code>##</code>. All resulting characters receive ID <code>0</code> (<code>[UNK]</code>). Real LLMs use trained subword algorithms like BPE or WordPiece.</p>
           </div>
 
           <div class="tokens-display-container">
@@ -182,10 +176,7 @@ A rabbit jumped over the red stone.</textarea>
       <!-- SECTION 3: SENTENCE EMBEDDINGS IN 3D -->
       <section class="pipeline-section" id="section-embeddings" aria-labelledby="heading-embeddings">
         <div class="section-header">
-          <div class="section-title-wrap">
-            <span class="section-badge">Section 3</span>
-            <h2 id="heading-embeddings">Sentence Embeddings in 3D</h2>
-          </div>
+          <h2 id="heading-embeddings" class="section-heading">3. Sentence Embeddings in 3D</h2>
           <p class="section-desc">Observe how sentences map into vector space. Toggle between static spelling-based similarity and contextual meaning-based similarity.</p>
         </div>
 
@@ -204,12 +195,12 @@ Solar rays illuminate the cloudless atmosphere.
 Quantum computers calculate complex mathematical algorithms.
 Advanced processors solve difficult numerical problems.</textarea>
               <div class="pair-guide">
-                <strong>Intended Test Pairs:</strong>
-                <ul>
+                <span class="pair-guide-heading">Intended Test Pairs:</span>
+                <ul class="pair-guide-list">
                   <li><span class="pair-tag pair-tag-feline">Pair A (Semantic):</span> #1 &amp; #2 &amp; #4 &amp; #5 (Feline resting)</li>
                   <li><span class="pair-tag pair-tag-spelling">Pair B (Lexical):</span> #3 &amp; #6 ("The cat sat..." vs "The bat sat...")</li>
                   <li><span class="pair-tag pair-tag-sky">Pair C (Semantic):</span> #7 &amp; #8 (Sunlight &amp; Sky)</li>
-                  <li><span class="pair-tag pair-tag-tech">Pair D (Semantic):</span> #9 &amp; #10 (Quantum &amp; Processors)</li>
+                  <li><span class="pair-tag pair-tag-tech">Pair D (Semantic):</span> #9 &amp; #10 (Computing &amp; Processors)</li>
                 </ul>
               </div>
             </div>
@@ -270,12 +261,12 @@ Advanced processors solve difficult numerical problems.</textarea>
               <div class="legend-item"><span class="legend-color-dot dot-feline"></span> Feline Resting (#1, #2, #4, #5)</div>
               <div class="legend-item"><span class="legend-color-dot dot-lexical"></span> Lexical Near-Match (#3, #6)</div>
               <div class="legend-item"><span class="legend-color-dot dot-sky"></span> Sunlight / Atmosphere (#7, #8)</div>
-              <div class="legend-item"><span class="legend-color-dot dot-tech"></span> Computation / Algorithms (#9, #10)</div>
+              <div class="legend-item"><span class="legend-color-dot dot-tech"></span> Computation / Processors (#9, #10)</div>
             </div>
 
-            <div class="heuristic-explainer-box">
-              <h4>Demo Coordinate Heuristics:</h4>
-              <p id="heuristic-details-text">
+            <div class="callout-box">
+              <h3 class="callout-title">Demo Coordinate Heuristics</h3>
+              <p id="heuristic-details-text" class="callout-text">
                 <strong>Spelling-based (static):</strong> Coordinates are computed deterministically from character n-gram Jaccard overlap and normalized Levenshtein distances against shared lexical anchors. Sentences sharing identical prefixes and lengths group tightly, regardless of semantic meaning.
               </p>
             </div>
@@ -284,34 +275,32 @@ Advanced processors solve difficult numerical problems.</textarea>
       </section>
 
       <!-- SECTION 4: CONCEPT NOTES -->
-      <section class="pipeline-section concept-notes-section" id="section-concepts" aria-labelledby="heading-concepts">
+      <section class="pipeline-section" id="section-concepts" aria-labelledby="heading-concepts">
         <div class="section-header">
-          <div class="section-title-wrap">
-            <span class="section-badge note-badge">Educational Foundations</span>
-            <h2 id="heading-concepts">Concept Notes: Vectors &amp; Embeddings</h2>
-          </div>
+          <h2 id="heading-concepts" class="section-heading">Educational Foundations: Vectors &amp; Embeddings</h2>
+          <p class="section-desc">Key theoretical principles governing representations in modern language models.</p>
         </div>
 
         <div class="concepts-grid">
-          <article class="concept-card">
-            <h3>1. What is a Vector?</h3>
-            <p>In machine learning, a <strong>vector</strong> is simply an ordered list of numbers. In a conceptual model, each number (or dimension) corresponds to a specific property, feature, or parameter of the input item.</p>
-          </article>
+          <div class="concept-item">
+            <h3 class="concept-title">1. What is a Vector?</h3>
+            <p class="concept-body">In machine learning, a <strong>vector</strong> is simply an ordered list of numbers. In a conceptual model, each number (or dimension) corresponds to a specific property, feature, or parameter of the input item.</p>
+          </div>
 
-          <article class="concept-card">
-            <h3>2. High-Dimensional Reality vs. 3D</h3>
-            <p>Real language models produce embeddings with hundreds or thousands of dimensions (such as 768, 1536, or 4096 dimensions). They cannot be plotted directly. This 3D view is an illustrative demonstration showing how geometric proximity represents conceptual similarity.</p>
-          </article>
+          <div class="concept-item">
+            <h3 class="concept-title">2. High-Dimensional Reality vs. 3D</h3>
+            <p class="concept-body">Real language models produce embeddings with hundreds or thousands of dimensions (such as 768, 1536, or 4096 dimensions). They cannot be plotted directly. This 3D view is an illustrative demonstration showing how geometric proximity represents conceptual similarity.</p>
+          </div>
 
-          <article class="concept-card">
-            <h3>3. Static vs. Contextual Similarity</h3>
-            <p><strong>Spelling similarity</strong> and <strong>semantic meaning</strong> are completely different concepts. "The cat sat on the..." and "The bat sat on the..." share nearly all characters, but refer to different creatures. Conversely, "The cat sat on the mat" and "Kitten rests on the rug" share almost zero words, yet mean the same thing.</p>
-          </article>
+          <div class="concept-item">
+            <h3 class="concept-title">3. Static vs. Contextual Similarity</h3>
+            <p class="concept-body"><strong>Spelling similarity</strong> and <strong>semantic meaning</strong> are completely different concepts. "The cat sat on the..." and "The bat sat on the..." share nearly all characters, but refer to different creatures. Conversely, "The cat sat on the mat" and "Kitten rests on the rug" share almost zero words, yet mean the same thing.</p>
+          </div>
 
-          <article class="concept-card">
-            <h3>4. Polysemy &amp; Context</h3>
-            <p>Words often change meaning based on their surrounding context. For example, the word <em>"light"</em> can mean "not heavy" (a light bag) or "illumination" (a bright light). Real contextual embeddings adjust their representations dynamically based on surrounding tokens.</p>
-          </article>
+          <div class="concept-item">
+            <h3 class="concept-title">4. Polysemy &amp; Context</h3>
+            <p class="concept-body">Words often change meaning based on their surrounding context. For example, the word <em>"light"</em> can mean "not heavy" (a light bag) or "illumination" (a bright light). Real contextual embeddings adjust their representations dynamically based on surrounding tokens.</p>
+          </div>
         </div>
       </section>
     </main>
