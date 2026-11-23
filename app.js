@@ -534,7 +534,7 @@
 
       elements.activeModeIndicator.textContent = 'Spelling-based (static)';
       elements.heuristicDetailsText.innerHTML = `
-        <strong>Spelling-based (static):</strong> Coordinates are computed from character n-gram Jaccard overlap and Levenshtein edit distance. Notice how <em>“The cat sat on the ...”</em> and <em>“The bat sat on the ...”</em> are positioned right next to each other because their literal spelling is 95% identical, even though a cat and a bat are completely different creatures.
+        <strong>Spelling-based (static):</strong> Coordinates come from character n-gram Jaccard overlap and Levenshtein edit distance. Sentences <em>“The cat sat on the ...”</em> (#3) and <em>“The bat sat on the ...”</em> (#6) land together because their character spelling is 95% identical, even though a cat and a bat have nothing in common.
       `;
     } else {
       const semanticVectors = rawLines.map(s => getSemanticVector(s));
@@ -551,7 +551,7 @@
 
       elements.activeModeIndicator.textContent = 'Meaning-based (contextual)';
       elements.heuristicDetailsText.innerHTML = `
-        <strong>Meaning-based (contextual):</strong> Coordinates are computed from semantic concept vectors. Notice how <em>“The cat sat on the mat.”</em> and <em>“Kitten rests on the rug.”</em> are positioned close together despite sharing almost zero words. Meanwhile, <em>“The bat sat on the ...”</em> is separated from the feline cluster because its meaning and context diverge.
+        <strong>Meaning-based (contextual):</strong> Coordinates come from semantic topic vectors. Sentences <em>“The cat sat on the mat.”</em> (#1) and <em>“Kitten rests on the rug.”</em> (#2) cluster together because their topic vectors match, despite sharing zero words. Sentence #6 (bat) separates from the cluster because its context diverges.
       `;
     }
 
